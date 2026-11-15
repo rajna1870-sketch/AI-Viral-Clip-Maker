@@ -5,7 +5,7 @@ import tempfile
 import subprocess
 from pathlib import Path
 from uuid import uuid4
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 import imageio_ffmpeg
@@ -24,7 +24,9 @@ def health():
     return {"status": "healthy"}
 
 @app.post("/make-clip")
-async def make_clip(video: UploadFile = File(...)):
+async def make_clip(video: UploadFile = File(...), duration: int = Form(30)):
+    if duration not in (15, 30, 45, 60):
+        raise HTTPException(status_code=400, detail="15, 30, 45 ya 60 seconds chunein")
     allowed = {".mp4", ".mov", ".mkv", ".webm"}
     suffix = Path(video.filename or "").suffix.lower()
 
@@ -58,7 +60,7 @@ async def make_clip(video: UploadFile = File(...)):
         command = [
             ffmpeg, "-y",
             "-i", input_path,
-            "-t", "30",
+            "-t", str(duration),
             "-map", "0:v:0",
             "-map", "0:a?",
             "-vf",

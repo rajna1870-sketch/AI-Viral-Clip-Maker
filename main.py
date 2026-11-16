@@ -6,11 +6,21 @@ import subprocess
 from pathlib import Path
 from uuid import uuid4
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 import imageio_ffmpeg
 
 app = FastAPI(title="AI Viral Clip Maker")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://rajna1870-sketch.github.io"
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home():

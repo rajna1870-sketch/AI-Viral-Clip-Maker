@@ -1,4 +1,6 @@
-
+import json
+import urllib.request
+from urllib.parse import urlparse
 import os
 import shutil
 import tempfile
@@ -117,3 +119,49 @@ async def make_clip(video: UploadFile = File(...), duration: int = Form(30)):
         )
     finally:
         await video.close()
+
+@app.post("/youtube-info")
+async def youtube_info(url: str = Form(...)):
+    parsed = urlparse(url.strip())
+    host = (parsed.hostname or "").lower()
+
+    if host not in (
+        "youtube.com",
+        "www.youtube.com",
+        "m.youtube.com",
+        "youtu.be",
+        "www.youtube.com"
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Sahi YouTube link dalein"
+        )
+
+    request_url = (
+        "https://www.youtube.com/oembed?url="
+        + urllib.parse.quote(url.strip(), safe="")
+        + "&format=json"
+    )
+
+    try:
+        request = urllib.request.Request(
+            request_url,
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(request, timeout=15) as response:
+            data = json.loads(response.read().decode("utf-8"))
+
+        return {
+            "status": "success",
+            "title": data.get("title"),
+            "channel": data.get("author_name"),
+            "thumbnail": data.get("thumbnail_url")
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Video ki jankari nahi mil saki. Link check karein."
+        )
+
+

@@ -189,10 +189,10 @@ async def make_best_clip(video: UploadFile = File(...)):
                 f.write(chunk)
 
         scenes = detect(
-            input_path,
-            ContentDetector(threshold=27.0),
-            show_progress=False
-        )
+    input_path,
+    ContentDetector(threshold=15.0, min_scene_len=15),
+    show_progress=False
+)
 
         if scenes:
     start, end = max(

@@ -194,23 +194,21 @@ async def make_best_clip(video: UploadFile = File(...)):
             show_progress=False
         )
 
-        if not scenes:
-            raise HTTPException(
-                status_code=400,
-                detail="Video mein scene nahi mil paye"
-            )
+        if scenes:
+    start, end = max(
+        scenes,
+        key=lambda scene: scene[1].get_seconds()
+        - scene[0].get_seconds()
+    )
 
-        start, end = max(
-            scenes,
-            key=lambda scene: scene[1].get_seconds()
-            - scene[0].get_seconds()
-        )
-
-        start_time = start.get_seconds()
-        duration = min(
-            end.get_seconds() - start_time,
-            60
-        )
+    start_time = start.get_seconds()
+    duration = min(
+        end.get_seconds() - start_time,
+        60
+    )
+else:
+    start_time = 0
+    duration = 30
 
         ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
 

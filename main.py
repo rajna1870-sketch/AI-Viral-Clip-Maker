@@ -164,4 +164,99 @@ async def youtube_info(url: str = Form(...)):
             detail="Video ki jankari nahi mil saki. Link check karein."
         )
 
+@app.post("/make-best-clip")
+async def make_best_clip(video: UploadFile = File(...)):
+    from scenedetect import detect, ContentDetector
+
+    suffix = Path(video.filename or "").suffix.lower()
+
+    if suffix not in [".mp4", ".mov", ".mkv", ".webm"]:
+        raise HTTPException(
+            status_code=400,
+            detail="MP4, MOV, MKV ya WEBM video upload karein"
+        )
+
+    folder = tempfile.mkdtemp(prefix="best_clip_")
+    input_path = os.path.join(folder, "input" + suffix)
+    output_path = os.path.join(folder, "best_clip.mp4")
+
+    try:
+        with open(input_path, "wb") as f:
+            while True:
+                chunk = await video.read(1024 * 1024)
+                if not chunk:
+                    break
+                f.write(chunk)
+
+        scenes = detect(
+            input_path,
+            ContentDetector(threshold=27.0),
+            show_progress=False
+        )
+
+        if not scenes:
+            raise HTTPException(
+                status_code=400,
+                detail="Video mein scene nahi mil paye"
+            )
+
+        start, end = max(
+            scenes,
+            key=lambda scene: scene[1].get_seconds()
+            - scene[0].get_seconds()
+        )
+
+        start_time = start.get_seconds()
+        duration = min(
+            end.get_seconds() - start_time,
+            60
+        )
+
+        ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+
+        command = [
+            ffmpeg, "-y",
+            "-ss", str(start_time),
+            "-i", input_path,
+            "-t", str(duration),
+            "-vf",
+            "scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280",
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-c:a", "aac",
+            "-movflags", "+faststart",
+            output_path
+        ]
+
+        subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            timeout=240
+        )
+
+        return FileResponse(
+            output_path,
+            media_type="video/mp4",
+            filename="best_clip.mp4",
+            background=BackgroundTask(
+                shutil.rmtree,
+                folder,
+                ignore_errors=True
+            )
+        )
+
+    except HTTPException:
+        shutil.rmtree(folder, ignore_errors=True)
+        raise
+    except Exception as e:
+        shutil.rmtree(folder, ignore_errors=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Clip nahi ban payi: " + str(e)[:300]
+        )
+    finally:
+        await video.close()
+
+
 

@@ -4,3 +4,4 @@ uvicorn
 python-multipart
 imageio-ffmpeg
 scenedetect[opencv]
+faster-whisper

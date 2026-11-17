@@ -194,7 +194,7 @@ async def make_best_clip(video: UploadFile = File(...)):
     show_progress=False
 )
 
-                if scenes:
+        if scenes:
             start, end = max(
                 scenes,
                 key=lambda scene: scene[1].get_seconds()

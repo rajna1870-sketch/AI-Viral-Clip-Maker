@@ -28,17 +28,23 @@ video{width:100%;margin-top:20px;border-radius:12px}
 <h1>AI Viral Clip Maker</h1>
 <p>अपनी वीडियो से शानदार Shorts बनाएँ</p>
 
-<div class="section">
-<h3>तरीका 1 – YouTube लिंक</h3>
+<h3>AI YouTube Shorts Maker</h3>
 <label>YouTube वीडियो का लिंक डालें</label>
+
 <input id="youtubeUrl" type="url"
-placeholder="YouTube लिंक यहाँ डालें">
+placeholder="https://www.youtube.com/watch?v=...">
 
 <button id="checkBtn" onclick="checkYoutube()">
-YouTube वीडियो पहचानें
+वीडियो पहचानें
 </button>
+
 <div id="info"></div>
-</div>
+
+<button id="bestClipBtn" onclick="makeYoutubeClip()" disabled>
+सबसे अच्छे Shorts बनाएँ
+</button>
+
+<div id="youtubeStatus"></div>
 
 <div class="section">
 <h3>तरीका 2 – फोन से वीडियो</h3>

@@ -3,5 +3,6 @@ fastapi
 uvicorn
 python-multipart
 imageio-ffmpeg
-scenedetect[opencv]
+scenedetect
+opencv-python-headless
 faster-whisper

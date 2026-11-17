@@ -194,21 +194,21 @@ async def make_best_clip(video: UploadFile = File(...)):
     show_progress=False
 )
 
-        if scenes:
-    start, end = max(
-        scenes,
-        key=lambda scene: scene[1].get_seconds()
-        - scene[0].get_seconds()
-    )
+                if scenes:
+            start, end = max(
+                scenes,
+                key=lambda scene: scene[1].get_seconds()
+                - scene[0].get_seconds()
+            )
 
-    start_time = start.get_seconds()
-    duration = min(
-        end.get_seconds() - start_time,
-        60
-    )
-else:
-    start_time = 0
-    duration = 30
+            start_time = start.get_seconds()
+            duration = min(
+                end.get_seconds() - start_time,
+                60
+            )
+        else:
+            start_time = 0
+            duration = 30
 
         ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
 

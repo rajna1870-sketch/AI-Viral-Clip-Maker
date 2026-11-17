@@ -7,134 +7,81 @@
 <title>AI Viral Clip Maker</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:20px;background:#101522;color:white;font-family:Arial,sans-serif}
-.container{max-width:500px;margin:25px auto;background:#1b2435;padding:24px;border-radius:18px}
+body{
+ margin:0;padding:18px;background:#101522;
+ color:white;font-family:Arial,sans-serif
+}
+.container{
+ max-width:520px;margin:20px auto;
+ background:#1b2435;padding:22px;border-radius:18px
+}
 h1{text-align:center;color:#7c9cff}
 p{text-align:center;color:#c4ccdc}
-label{display:block;margin:18px 0 8px}
-input,select,button{width:100%;padding:14px;border:0;border-radius:9px;font-size:16px}
-input,select{background:#303c51;color:white}
-button{margin-top:15px;background:#5278ff;color:white;font-weight:bold}
+label{display:block;margin:20px 0 9px}
+input,button{
+ width:100%;padding:14px;border:0;
+ border-radius:9px;font-size:16px
+}
+input{background:#303c51;color:white}
+button{
+ margin-top:15px;background:#5278ff;
+ color:white;font-weight:bold
+}
 button:disabled{opacity:.5}
 .note{font-size:12px;color:#aeb9cc}
-#info{margin-top:15px;overflow-wrap:anywhere}
-img{width:100%;border-radius:10px;margin-top:10px}
-video{width:100%;margin-top:20px;border-radius:12px}
-.section{margin-top:25px;padding-top:15px;border-top:1px solid #46516a}
+#status{margin-top:18px;text-align:center}
+.clip{
+ background:#303c51;padding:15px;
+ border-radius:12px;margin-top:15px
+}
+.clip h3{color:#9db3ff}
+.clip a{
+ display:block;text-align:center;
+ background:#5278ff;color:white;
+ padding:12px;border-radius:8px;
+ text-decoration:none;margin-top:12px
+}
+video{width:100%;border-radius:10px;margin-top:10px}
 </style>
 </head>
 <body>
+
 <div class="container">
 <h1>AI Viral Clip Maker</h1>
 <p>अपनी वीडियो से शानदार Shorts बनाएँ</p>
 
-<h3>AI YouTube Shorts Maker</h3>
-<label>YouTube वीडियो का लिंक डालें</label>
+<label>अपनी MP4 वीडियो चुनें</label>
+<input type="file" id="video" accept="video/mp4,video/quicktime,video/webm,video/x-matroska">
 
-<input id="youtubeUrl" type="url"
-placeholder="https://www.youtube.com/watch?v=...">
-
-<button id="checkBtn" onclick="checkYoutube()">
-वीडियो पहचानें
-</button>
-
-<div id="info"></div>
-
-<button id="bestClipBtn" onclick="makeYoutubeClip()" disabled>
-सबसे अच्छे Shorts बनाएँ
-</button>
-
-<div id="youtubeStatus"></div>
-
-<div class="section">
-<h3>तरीका 2 – फोन से वीडियो</h3>
-<label>अपनी वीडियो चुनें</label>
-<input type="file" id="video"
-accept="video/mp4,video/quicktime,video/webm,video/x-matroska">
-
-<label>क्लिप की अवधि</label>
-<select id="duration">
-<option value="15">15 सेकंड</option>
-<option value="30" selected>30 सेकंड</option>
-<option value="45">45 सेकंड</option>
-<option value="60">60 सेकंड</option>
-</select>
-
-<button id="makeBtn" onclick="makeClip()">
-वीडियो बनाएँ
+<button id="makeBtn" onclick="makeBestClips()">
+सबसे अच्छी क्लिप बनाएँ
 </button>
 
 <div id="status"></div>
-<video id="result" controls hidden></video>
-<a id="download" hidden download="viral_clip.mp4">
-<button type="button">वीडियो डाउनलोड करें</button>
-</a>
-</div>
+<div id="clips"></div>
 
 <p class="note">
-YouTube लिंक से अभी वीडियो की जानकारी मिलेगी।
-वीडियो काटने के लिए अपनी या अनुमति प्राप्त वीडियो फ़ाइल अपलोड करें।
-AI द्वारा सबसे अच्छे क्षण चुनने की सुविधा अभी बननी बाकी है।
+अधिकतम वीडियो आकार 200 MB है।
+वीडियो का विश्लेषण करके उपलब्ध अच्छे दृश्यों की क्लिप बनाई जाएँगी।
 </p>
 </div>
 
 <script>
 const API="https://ai-viral-clip-maker.onrender.com";
 
-async function checkYoutube(){
- const url=document.getElementById("youtubeUrl").value.trim();
- const info=document.getElementById("info");
- const btn=document.getElementById("checkBtn");
-
- if(!url){
-   info.textContent="पहले YouTube लिंक डालें।";
-   return;
- }
-
- btn.disabled=true;
- info.textContent="वीडियो की जानकारी खोज रहे हैं...";
-
- try{
-   const data=new FormData();
-   data.append("url",url);
-
-   const response=await fetch(API+"/youtube-info",{
-     method:"POST",body:data
-   });
-
-   const result=await response.json();
-   if(!response.ok) throw new Error(result.detail);
-
-   info.innerHTML="";
-   const title=document.createElement("h3");
-   title.textContent=result.title || "शीर्षक उपलब्ध नहीं";
-   const channel=document.createElement("p");
-   channel.textContent="चैनल: "+(result.channel || "उपलब्ध नहीं");
-   info.append(title,channel);
-
-   if(result.thumbnail){
-     const img=document.createElement("img");
-     img.src=result.thumbnail;
-     img.alt="वीडियो थंबनेल";
-     info.append(img);
-   }
- }catch(error){
-   info.textContent="त्रुटि: "+error.message;
- }finally{
-   btn.disabled=false;
- }
-}
-
-async function makeClip(){
+async function makeBestClips(){
  const file=document.getElementById("video").files[0];
- const duration=document.getElementById("duration").value;
  const status=document.getElementById("status");
+ const clips=document.getElementById("clips");
  const btn=document.getElementById("makeBtn");
 
+ clips.innerHTML="";
+
  if(!file){
-   status.textContent="पहले फोन से वीडियो चुनें।";
+   status.textContent="पहले वीडियो चुनें।";
    return;
  }
+
  if(file.size>200*1024*1024){
    status.textContent="वीडियो 200 MB से छोटी होनी चाहिए।";
    return;
@@ -142,32 +89,47 @@ async function makeClip(){
 
  const data=new FormData();
  data.append("video",file);
- data.append("duration",duration);
 
  btn.disabled=true;
- status.textContent="वीडियो बनाई जा रही है...";
+ status.textContent="वीडियो का विश्लेषण हो रहा है। कृपया प्रतीक्षा करें...";
 
  try{
-   const response=await fetch(API+"/make-clip",{
-     method:"POST",body:data
+   const response=await fetch(API+"/make-best-clips",{
+     method:"POST",
+     body:data
    });
+
+   const result=await response.json();
+
    if(!response.ok){
-     const error=await response.json();
-     throw new Error(error.detail || "वीडियो नहीं बनी");
+     throw new Error(result.detail || "वीडियो नहीं बन पाई");
    }
 
-   const blob=await response.blob();
-   const url=URL.createObjectURL(blob);
+   status.textContent="कुल "+result.total_clips+" क्लिप तैयार हैं!";
 
-   const result=document.getElementById("result");
-   result.src=url;
-   result.hidden=false;
+   result.clips.forEach((clip)=>{
+     const card=document.createElement("div");
+     card.className="clip";
 
-   const download=document.getElementById("download");
-   download.href=url;
-   download.hidden=false;
+     const title=document.createElement("h3");
+     title.textContent=clip.title;
 
-   status.textContent="आपकी क्लिप तैयार है!";
+     const duration=document.createElement("p");
+     duration.textContent="अवधि: "+clip.duration+" सेकंड";
+
+     const video=document.createElement("video");
+     video.controls=true;
+     video.src=API+clip.download_url;
+
+     const download=document.createElement("a");
+     download.href=API+clip.download_url;
+     download.download=clip.filename;
+     download.textContent="MP4 वीडियो डाउनलोड करें";
+
+     card.append(title,duration,video,download);
+     clips.append(card);
+   });
+
  }catch(error){
    status.textContent="त्रुटि: "+error.message;
  }finally{

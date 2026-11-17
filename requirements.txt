@@ -6,3 +6,4 @@ imageio-ffmpeg
 scenedetect
 opencv-python-headless
 faster-whisper
+av==18.1.0

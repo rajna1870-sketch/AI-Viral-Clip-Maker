@@ -34,87 +34,89 @@ video{width:100%;border-radius:10px;margin-top:10px}
 </div>
 
 <script>
-const API = "https://ai-viral-clip-maker.onrender.com";
+const btn=document.getElementById("makeBtn");
+const statusBox=document.getElementById("status");
+const clipsBox=document.getElementById("clips");
 
-const btn = document.getElementById("makeBtn");
-const statusBox = document.getElementById("status");
-const clipsBox = document.getElementById("clips");
-
-btn.addEventListener("click", makeBestClips);
+btn.addEventListener("click",makeBestClips);
 
 async function makeBestClips(){
-  const file = document.getElementById("video").files[0];
-  clipsBox.innerHTML = "";
+ const file=document.getElementById("video").files[0];
+ clipsBox.innerHTML="";
 
-  if(!file){
-    statusBox.textContent = "पहले वीडियो चुनें।";
-    return;
-  }
+ if(!file){
+  statusBox.textContent="पहले वीडियो चुनें।";
+  return;
+ }
 
-  if(file.size > 200 * 1024 * 1024){
-    statusBox.textContent = "वीडियो 200 MB से छोटी होनी चाहिए।";
-    return;
-  }
+ if(file.size>200*1024*1024){
+  statusBox.textContent="वीडियो 200 MB से छोटी होनी चाहिए।";
+  return;
+ }
 
-  const data = new FormData();
-  data.append("video", file);
+ const data=new FormData();
+ data.append("video",file);
 
-  btn.disabled = true;
-  statusBox.textContent = "वीडियो सर्वर पर भेजी जा रही है। कृपया प्रतीक्षा करें...";
+ btn.disabled=true;
+ statusBox.textContent="वीडियो भेजी जा रही है। कृपया प्रतीक्षा करें...";
+
+ try{
+  const response=await fetch("/make-best-clips",{
+   method:"POST",
+   body:data
+  });
+
+  const text=await response.text();
+  let result;
 
   try{
-    const response = await fetch(API + "/make-best-clips", {
-      method: "POST",
-      body: data
-    });
-
-    const text = await response.text();
-    let result;
-
-    try{
-      result = JSON.parse(text);
-    }catch(e){
-      throw new Error("सर्वर से JSON जवाब नहीं मिला। HTTP " + response.status + ": " + text.slice(0,250));
-    }
-
-    if(!response.ok){
-      throw new Error(result.detail || "सर्वर त्रुटि: " + response.status);
-    }
-
-    if(!Array.isArray(result.clips)){
-      throw new Error("सर्वर के जवाब में क्लिप की सूची नहीं मिली।");
-    }
-
-    statusBox.textContent = "कुल " + result.total_clips + " क्लिप तैयार हैं।";
-
-    result.clips.forEach(clip => {
-      const card = document.createElement("div");
-      card.className = "clip";
-
-      const title = document.createElement("h3");
-      title.textContent = clip.title;
-
-      const duration = document.createElement("p");
-      duration.textContent = "अवधि: " + clip.duration + " सेकंड";
-
-      const player = document.createElement("video");
-      player.controls = true;
-      player.src = API + clip.download_url;
-
-      const link = document.createElement("a");
-      link.href = API + clip.download_url;
-      link.textContent = "MP4 वीडियो डाउनलोड करें";
-      link.download = clip.filename;
-
-      card.append(title, duration, player, link);
-      clipsBox.appendChild(card);
-    });
-
-  }catch(error){
-    statusBox.textContent = "त्रुटि: " + error.message;
-  }finally{
-    btn.disabled = false;
+   result=JSON.parse(text);
+  }catch(e){
+   throw new Error("सर्वर का जवाब समझ नहीं आया। HTTP "+response.status+" "+text.slice(0,200));
   }
+
+  if(!response.ok){
+   throw new Error(result.detail||"सर्वर त्रुटि "+response.status);
+  }
+
+  if(!Array.isArray(result.clips)){
+   throw new Error("क्लिप की सूची नहीं मिली।");
+  }
+
+  statusBox.textContent="कुल "+result.total_clips+" क्लिप तैयार हैं।";
+
+  result.clips.forEach(clip=>{
+   const card=document.createElement("div");
+   card.className="clip";
+
+   const title=document.createElement("h3");
+   title.textContent=clip.title;
+
+   const duration=document.createElement("p");
+   duration.textContent="अवधि: "+clip.duration+" सेकंड";
+
+   const player=document.createElement("video");
+   player.controls=true;
+   player.src=clip.download_url;
+
+   const link=document.createElement("a");
+   link.href=clip.download_url;
+   link.textContent="MP4 वीडियो डाउनलोड करें";
+   link.download=clip.filename;
+
+   card.append(title,duration,player,link);
+   clipsBox.appendChild(card);
+  });
+
+  if(result.clips.length===0){
+   statusBox.textContent="कोई अच्छी क्लिप नहीं मिली। दूसरी वीडियो आजमाएँ।";
+  }
+
+ }catch(error){
+  statusBox.textContent="त्रुटि: "+error.message;
+ }finally{
+  btn.disabled=false;
+ }
 }
 </script>
 </body>

@@ -33,7 +33,18 @@ MAX_CLIPS = 10
 
 @app.get("/")
 def home():
-    return FileResponse("index.html", media_type="text/html")
+    html_path = Path(__file__).resolve().parent / "index.html"
+
+    if not html_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="index.html file nahi mili"
+        )
+
+    return FileResponse(
+        str(html_path),
+        media_type="text/html"
+    )
 
 
 @app.get("/health")

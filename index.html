@@ -7,141 +7,114 @@
 <title>AI Viral Clip Maker</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;padding:18px;background:#101522;
- color:white;font-family:Arial,sans-serif
-}
-.container{
- max-width:520px;margin:20px auto;
- background:#1b2435;padding:22px;border-radius:18px
-}
+body{margin:0;padding:18px;background:#101522;color:white;font-family:Arial}
+.container{max-width:520px;margin:20px auto;background:#1b2435;padding:22px;border-radius:18px}
 h1{text-align:center;color:#7c9cff}
 p{text-align:center;color:#c4ccdc}
-label{display:block;margin:20px 0 9px}
-input,button{
- width:100%;padding:14px;border:0;
- border-radius:9px;font-size:16px
-}
+input,button{width:100%;padding:14px;margin-top:12px;border:0;border-radius:9px;font-size:16px}
 input{background:#303c51;color:white}
-button{
- margin-top:15px;background:#5278ff;
- color:white;font-weight:bold
-}
+button{background:#5278ff;color:white;font-weight:bold}
 button:disabled{opacity:.5}
-.note{font-size:12px;color:#aeb9cc}
-#status{margin-top:18px;text-align:center}
-.clip{
- background:#303c51;padding:15px;
- border-radius:12px;margin-top:15px
-}
+#status{margin-top:18px;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere}
+.clip{background:#303c51;padding:15px;border-radius:12px;margin-top:15px}
 .clip h3{color:#9db3ff}
-.clip a{
- display:block;text-align:center;
- background:#5278ff;color:white;
- padding:12px;border-radius:8px;
- text-decoration:none;margin-top:12px
-}
+.clip a{display:block;text-align:center;background:#5278ff;color:white;padding:12px;border-radius:8px;text-decoration:none;margin-top:12px}
 video{width:100%;border-radius:10px;margin-top:10px}
 </style>
 </head>
 <body>
-
 <div class="container">
 <h1>AI Viral Clip Maker</h1>
 <p>अपनी वीडियो से शानदार Shorts बनाएँ</p>
-
-<label>अपनी MP4 वीडियो चुनें</label>
-<input type="file" id="video" accept="video/mp4,video/quicktime,video/webm,video/x-matroska">
-
-<button id="makeBtn" onclick="makeBestClips()">
-सबसे अच्छी क्लिप बनाएँ
-</button>
-
+<label>अपनी वीडियो चुनें</label>
+<input type="file" id="video" accept=".mp4,.mov,.mkv,.webm">
+<button id="makeBtn">सबसे अच्छी क्लिप बनाएँ</button>
 <div id="status"></div>
 <div id="clips"></div>
-
-<p class="note">
-अधिकतम वीडियो आकार 200 MB है।
-वीडियो का विश्लेषण करके उपलब्ध अच्छे दृश्यों की क्लिप बनाई जाएँगी।
-</p>
 </div>
 
 <script>
-const API="";
+const API = "https://ai-viral-clip-maker.onrender.com";
+
+const btn = document.getElementById("makeBtn");
+const statusBox = document.getElementById("status");
+const clipsBox = document.getElementById("clips");
+
+btn.addEventListener("click", makeBestClips);
 
 async function makeBestClips(){
- const file=document.getElementById("video").files[0];
- const status=document.getElementById("status");
- const clips=document.getElementById("clips");
- const btn=document.getElementById("makeBtn");
+  const file = document.getElementById("video").files[0];
+  clipsBox.innerHTML = "";
 
- clips.innerHTML="";
+  if(!file){
+    statusBox.textContent = "पहले वीडियो चुनें।";
+    return;
+  }
 
- if(!file){
-   status.textContent="पहले वीडियो चुनें।";
-   return;
- }
+  if(file.size > 200 * 1024 * 1024){
+    statusBox.textContent = "वीडियो 200 MB से छोटी होनी चाहिए।";
+    return;
+  }
 
- if(file.size>200*1024*1024){
-   status.textContent="वीडियो 200 MB से छोटी होनी चाहिए।";
-   return;
- }
+  const data = new FormData();
+  data.append("video", file);
 
- const data=new FormData();
- data.append("video",file);
+  btn.disabled = true;
+  statusBox.textContent = "वीडियो सर्वर पर भेजी जा रही है। कृपया प्रतीक्षा करें...";
 
- btn.disabled=true;
- status.textContent="वीडियो का विश्लेषण हो रहा है। कृपया प्रतीक्षा करें...";
+  try{
+    const response = await fetch(API + "/make-best-clips", {
+      method: "POST",
+      body: data
+    });
 
- try{
-   const response=await fetch(API+"/make-best-clips",{
-     method:"POST",
-     body:data
-   });
+    const text = await response.text();
+    let result;
 
-const text = await response.text();
+    try{
+      result = JSON.parse(text);
+    }catch(e){
+      throw new Error("सर्वर से JSON जवाब नहीं मिला। HTTP " + response.status + ": " + text.slice(0,250));
+    }
 
-let result;
-try {
-  result = JSON.parse(text);
-} catch (e) {
-  throw new Error("सर्वर ने JSON के बजाय HTML भेजा। कृपया API पते की जाँच करें।");
-}
+    if(!response.ok){
+      throw new Error(result.detail || "सर्वर त्रुटि: " + response.status);
+    }
 
-   if(!response.ok){
-     throw new Error(result.detail || "वीडियो नहीं बन पाई");
-   }
+    if(!Array.isArray(result.clips)){
+      throw new Error("सर्वर के जवाब में क्लिप की सूची नहीं मिली।");
+    }
 
-   status.textContent="कुल "+result.total_clips+" क्लिप तैयार हैं!";
+    statusBox.textContent = "कुल " + result.total_clips + " क्लिप तैयार हैं।";
 
-   result.clips.forEach((clip)=>{
-     const card=document.createElement("div");
-     card.className="clip";
+    result.clips.forEach(clip => {
+      const card = document.createElement("div");
+      card.className = "clip";
 
-     const title=document.createElement("h3");
-     title.textContent=clip.title;
+      const title = document.createElement("h3");
+      title.textContent = clip.title;
 
-     const duration=document.createElement("p");
-     duration.textContent="अवधि: "+clip.duration+" सेकंड";
+      const duration = document.createElement("p");
+      duration.textContent = "अवधि: " + clip.duration + " सेकंड";
 
-     const video=document.createElement("video");
-     video.controls=true;
-     video.src=API+clip.download_url;
+      const player = document.createElement("video");
+      player.controls = true;
+      player.src = API + clip.download_url;
 
-     const download=document.createElement("a");
-     download.href=API+clip.download_url;
-     download.download=clip.filename;
-     download.textContent="MP4 वीडियो डाउनलोड करें";
+      const link = document.createElement("a");
+      link.href = API + clip.download_url;
+      link.textContent = "MP4 वीडियो डाउनलोड करें";
+      link.download = clip.filename;
 
-     card.append(title,duration,video,download);
-     clips.append(card);
-   });
+      card.append(title, duration, player, link);
+      clipsBox.appendChild(card);
+    });
 
- }catch(error){
-   status.textContent="त्रुटि: "+error.message;
- }finally{
-   btn.disabled=false;
- }
+  }catch(error){
+    statusBox.textContent = "त्रुटि: " + error.message;
+  }finally{
+    btn.disabled = false;
+  }
 }
 </script>
 </body>

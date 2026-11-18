@@ -33,7 +33,7 @@ MAX_CLIPS = 10
 
 @app.get("/")
 def home():
-    return {"status": "success", "message": "AI Viral Clip Maker Running"}
+    return FileResponse("index.html", media_type="text/html")
 
 
 @app.get("/health")

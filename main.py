@@ -19,12 +19,11 @@ app = FastAPI(title="AI Viral Clip Maker")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://rajna1870-sketch.github.io"],
+    allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
-
 JOB_ROOT = "/tmp/viral_clip_jobs"
 os.makedirs(JOB_ROOT, exist_ok=True)
 
